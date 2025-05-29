@@ -11,7 +11,11 @@ import { notFound } from "next/navigation"
 
 
 
-export default async function CollectionPage( params : Promise<{id:string}>) {
+export default async function CollectionPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const {id} = await params;
   const collections = await getUserCollections()
   const collection = collections.find((c) => c.id === id)
