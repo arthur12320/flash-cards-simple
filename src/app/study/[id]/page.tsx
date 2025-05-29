@@ -3,19 +3,22 @@ import { getUserCollections } from "@/lib/actions/collections"
 import { StudySession } from "@/components/study-session"
 import { notFound } from "next/navigation"
 
-interface StudyPageProps {
-  params: { id: string }
-}
 
-export default async function StudyPage({ params }: StudyPageProps) {
+
+export default async function StudyPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const {id} = await params;
   const collections = await getUserCollections()
-  const collection = collections.find((c) => c.id === params.id)
+  const collection = collections.find((c) => c.id === id)
 
   if (!collection) {
     notFound()
   }
 
-  const cards = await getCollectionCards(params.id)
+  const cards = await getCollectionCards(id)
 
   if (cards.length === 0) {
     return (
