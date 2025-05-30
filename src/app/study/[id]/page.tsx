@@ -1,11 +1,12 @@
 import { getDueCards, getCollectionStats } from "@/lib/actions/card-reviews"
 import { getUserCollections } from "@/lib/actions/collections"
+import { getCurrentUser } from "@/lib/actions/users"
 import { StudySession } from "@/components/study-session"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Clock, BookOpen } from "lucide-react"
 import Link from "next/link"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
 
 
 
@@ -15,6 +16,11 @@ export default async function StudyPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params
+  const user = await getCurrentUser()
+  if (!user) {
+    redirect("/auth/signin")
+  }
+
   const collections = await getUserCollections()
   const collection = collections.find((c) => c.id === id)
 
@@ -34,7 +40,7 @@ export default async function StudyPage({
               <Clock className="h-8 w-8 text-muted-foreground" />
             </div>
             <h1 className="text-2xl font-bold mb-2">All Caught Up!</h1>
-            <p className="text-muted-foreground mb-6">{`No cards are due for review in ${collection.name} right now.`}</p>
+            <p className="text-muted-foreground mb-6">No cards are due for review in "{collection.name}" right now.</p>
           </div>
 
           {stats && (
@@ -83,7 +89,7 @@ export default async function StudyPage({
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <StudySession collection={collection} cards={dueCards} />
+      <StudySession collection={collection} cards={dueCards} user={user} />
     </div>
   )
 }

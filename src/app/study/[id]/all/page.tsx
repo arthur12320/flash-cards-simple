@@ -1,7 +1,8 @@
 import { getCollectionCards } from "@/lib/actions/cards"
 import { getUserCollections } from "@/lib/actions/collections"
 import { StudySession } from "@/components/study-session"
-import { notFound } from "next/navigation"
+import { notFound, redirect } from "next/navigation"
+import { getCurrentUser } from "@/lib/actions/users";
 
 
 
@@ -11,6 +12,10 @@ export default async function StudyAllPage({
   params: Promise<{ id: string }>;
 }) {
   const {id} = await params
+  const user = await getCurrentUser()
+  if (!user) {
+    redirect("/auth/signin")
+  }
   const collections = await getUserCollections()
   const collection = collections.find((c) => c.id === id)
 
@@ -36,7 +41,7 @@ export default async function StudyAllPage({
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
-      <StudySession collection={collection} cards={shuffledCards} />
+      <StudySession collection={collection} cards={shuffledCards} user={user} />
     </div>
   )
 }

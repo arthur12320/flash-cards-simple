@@ -86,6 +86,60 @@ export async function updateUserSettings(formData: FormData) {
   return updatedUser
 }
 
+export async function updateReviewIntervals(formData: FormData) {
+  const session = await auth()
+  if (!session?.user?.id) {
+    throw new Error("Unauthorized")
+  }
+
+  const easyDays = Number.parseInt(formData.get("easyDays") as string)
+  const easyHours = Number.parseInt(formData.get("easyHours") as string) || 0
+  const mediumDays = Number.parseInt(formData.get("mediumDays") as string)
+  const mediumHours = Number.parseInt(formData.get("mediumHours") as string) || 0
+  const hardMinutes = Number.parseInt(formData.get("hardMinutes") as string)
+
+  // Validate inputs
+  if (isNaN(easyDays) || easyDays < 0 || easyDays > 365) {
+    throw new Error("Easy interval days must be between 0 and 365")
+  }
+  if (isNaN(easyHours) || easyHours < 0 || easyHours > 23) {
+    throw new Error("Easy interval hours must be between 0 and 23")
+  }
+  if (isNaN(mediumDays) || mediumDays < 0 || mediumDays > 365) {
+    throw new Error("Medium interval days must be between 0 and 365")
+  }
+  if (isNaN(mediumHours) || mediumHours < 0 || mediumHours > 23) {
+    throw new Error("Medium interval hours must be between 0 and 23")
+  }
+  if (isNaN(hardMinutes) || hardMinutes < 1 || hardMinutes > 1440) {
+    throw new Error("Hard interval must be between 1 and 1440 minutes")
+  }
+
+  // Convert to minutes
+  const easyInterval = easyDays * 24 * 60 + easyHours * 60
+  const mediumInterval = mediumDays * 24 * 60 + mediumHours * 60
+  const hardInterval = hardMinutes
+
+  // Ensure logical ordering (hard < medium < easy)
+  if (hardInterval >= mediumInterval || mediumInterval >= easyInterval) {
+    throw new Error("Intervals must be in order: Hard < Medium < Easy")
+  }
+
+  const [updatedUser] = await db
+    .update(users)
+    .set({
+      easyInterval,
+      mediumInterval,
+      hardInterval,
+      updatedAt: new Date(),
+    })
+    .where(eq(users.id, session.user.id))
+    .returning()
+
+  revalidatePath("/account")
+  return updatedUser
+}
+
 export async function deleteUserAccount() {
   const session = await auth()
   if (!session?.user?.id) {

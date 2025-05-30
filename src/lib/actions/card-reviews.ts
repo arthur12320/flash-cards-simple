@@ -1,24 +1,28 @@
 "use server"
 
 import  db  from "@/db"
-import { cards } from "@/db/schema/cards"
+import { cards, SelectCards } from "@/db/schema/cards"
 import { collections } from "@/db/schema/collections"
+import users from "@/db/schema/users"
 import { auth } from "../../../auth"
 import { eq, and, lte, or, isNull } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 type Difficulty = "easy" | "medium" | "hard"
 
-const REVIEW_INTERVALS = {
-  easy: 2 * 24 * 60 * 60 * 1000, // 2 days in milliseconds
-  medium: 1 * 24 * 60 * 60 * 1000, // 1 day in milliseconds
-  hard: 5 * 60 * 1000, // 5 minutes in milliseconds
-} as const
-
 export async function reviewCard(cardId: string, difficulty: Difficulty) {
   const session = await auth()
   if (!session?.user?.id) {
     throw new Error("Unauthorized")
+  }
+
+  // Get user settings for intervals
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, session.user.id),
+  })
+
+  if (!user) {
+    throw new Error("User not found")
   }
 
   // Get card with collection to verify ownership
@@ -34,7 +38,22 @@ export async function reviewCard(cardId: string, difficulty: Difficulty) {
   }
 
   const now = new Date()
-  const nextReview = new Date(now.getTime() + REVIEW_INTERVALS[difficulty])
+
+  // Get interval in minutes based on difficulty and user settings
+  let intervalMinutes: number
+  switch (difficulty) {
+    case "easy":
+      intervalMinutes = user.easyInterval
+      break
+    case "medium":
+      intervalMinutes = user.mediumInterval
+      break
+    case "hard":
+      intervalMinutes = user.hardInterval
+      break
+  }
+
+  const nextReview = new Date(now.getTime() + intervalMinutes * 60 * 1000)
 
   const [updatedCard] = await db
     .update(cards)
@@ -121,8 +140,8 @@ export async function getCollectionStats(collectionId: string) {
 
   const now = new Date()
   const totalCards = collection.cards.length
-  const reviewedCards = collection.cards.filter((card) => card.lastReviewed).length
-  const dueCards = collection.cards.filter((card) => !card.nextReview || card.nextReview <= now).length
+  const reviewedCards = collection.cards.filter((card:SelectCards) => card.lastReviewed).length
+  const dueCards = collection.cards.filter((card:SelectCards) => !card.nextReview || card.nextReview <= now).length
 
   return {
     totalCards,

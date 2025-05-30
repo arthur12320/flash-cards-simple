@@ -9,6 +9,7 @@ import { RotateCcw, ChevronLeft, ChevronRight, Clock, CheckCircle } from "lucide
 import Link from "next/link"
 import { reviewCard, completeStudySession } from "@/lib/actions/card-reviews"
 import { useRouter } from "next/navigation"
+import type { SelectUser } from "@/lib/db/schema/users"
 
 interface StudySessionProps {
   collection: {
@@ -24,6 +25,7 @@ interface StudySessionProps {
     difficulty: "easy" | "medium" | "hard" | null
     reviewCount: number
   }>
+  user: SelectUser
 }
 
 type Difficulty = "easy" | "medium" | "hard"
@@ -34,7 +36,7 @@ interface CardReview {
   timestamp: Date
 }
 
-export function StudySession({ collection, cards }: StudySessionProps) {
+export function StudySession({ collection, cards, user }: StudySessionProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isFlipped, setIsFlipped] = useState(false)
   const [showDifficulty, setShowDifficulty] = useState(false)
@@ -128,13 +130,31 @@ export function StudySession({ collection, cards }: StudySessionProps) {
   }
 
   const getNextReviewText = (difficulty: Difficulty) => {
+    let minutes: number
     switch (difficulty) {
       case "easy":
-        return "2 days"
+        minutes = user.easyInterval
+        break
       case "medium":
-        return "1 day"
+        minutes = user.mediumInterval
+        break
       case "hard":
-        return "5 minutes"
+        minutes = user.hardInterval
+        break
+    }
+
+    if (minutes < 60) {
+      return `${minutes} min`
+    } else if (minutes < 24 * 60) {
+      const hours = Math.floor(minutes / 60)
+      return `${hours} hour${hours !== 1 ? "s" : ""}`
+    } else {
+      const days = Math.floor(minutes / (24 * 60))
+      const remainingHours = Math.floor((minutes % (24 * 60)) / 60)
+      if (remainingHours > 0) {
+        return `${days}d ${remainingHours}h`
+      }
+      return `${days} day${days !== 1 ? "s" : ""}`
     }
   }
 
@@ -226,7 +246,7 @@ export function StudySession({ collection, cards }: StudySessionProps) {
         <div className="space-y-4">
           <div className="text-center">
             <h3 className="text-lg font-semibold mb-2">How difficult was this card?</h3>
-            <p className="text-sm text-muted-foreground">{`This affects when you'll see it again`}</p>
+            <p className="text-sm text-muted-foreground">This affects when you'll see it again</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Button
