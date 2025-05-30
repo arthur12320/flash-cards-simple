@@ -226,7 +226,7 @@ export function StudySession({ collection, cards }: StudySessionProps) {
         <div className="space-y-4">
           <div className="text-center">
             <h3 className="text-lg font-semibold mb-2">How difficult was this card?</h3>
-            <p className="text-sm text-muted-foreground">This affects when you'll see it again</p>
+            <p className="text-sm text-muted-foreground">{`This affects when you'll see it again`}</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Button

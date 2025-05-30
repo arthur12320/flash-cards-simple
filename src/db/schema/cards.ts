@@ -1,5 +1,5 @@
 import { pgTable, text, timestamp, uuid, integer } from "drizzle-orm/pg-core"
-import { relations } from "drizzle-orm"
+import { InferSelectModel, relations } from "drizzle-orm"
 import { collections } from "./collections"
 
 export const cards = pgTable("cards", {
@@ -24,3 +24,5 @@ export const cardsRelations = relations(cards, ({ one }) => ({
     references: [collections.id],
   }),
 }))
+
+export type SelectCards = InferSelectModel<typeof cards>;

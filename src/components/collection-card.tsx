@@ -5,13 +5,14 @@ import { Badge } from "@/components/ui/badge"
 import { BookOpen, Play, Clock } from "lucide-react"
 import { DeleteCollectionButton } from "./delete-collection-button"
 import { getCollectionStats } from "@/lib/actions/card-reviews"
+import { SelectCards } from "@/db/schema"
 
 interface CollectionCardProps {
   collection: {
     id: string
     name: string
     description: string | null
-    cards: any[]
+    cards: SelectCards[]
     createdAt: Date
   }
 }
