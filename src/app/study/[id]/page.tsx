@@ -40,7 +40,7 @@ export default async function StudyPage({
               <Clock className="h-8 w-8 text-muted-foreground" />
             </div>
             <h1 className="text-2xl font-bold mb-2">All Caught Up!</h1>
-            <p className="text-muted-foreground mb-6">No cards are due for review in "{collection.name}" right now.</p>
+            <p className="text-muted-foreground mb-6">{`No cards are due for review in ${collection.name} right now.`}</p>
           </div>
 
           {stats && (
